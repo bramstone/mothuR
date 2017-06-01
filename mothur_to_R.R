@@ -1,6 +1,6 @@
 #Function to load in distance matrices created in mothur
 #x = The name (and file path if necessary) of the .dist file to read in
-mothur_dist<-function(x) {
+read.mothurdist<-function(x) {
   groups<-scan(x,what=integer(),nlines=1)
   y<-data.matrix(read.table(x,sep='\t',fill=T,row.names=1,skip=1,col.names=1:groups))
   y<-cbind(y,rep(NA,dim(y)[1]))
@@ -8,8 +8,24 @@ mothur_dist<-function(x) {
   y<-as.dist(y,diag=FALSE,upper=FALSE)
 }
 
+#reads in shared file (specified by filename and file path if necessary) as an integer matrix (more memory efficient than data frame)
+read.shared<-function(x) {
+  #read data in as character
+  y<-scan(x,what=character(),skip=1,sep='\t',quiet=T)
+  #read column names in
+  y.names<-scan(x,what=character(),nlines=1,sep='\t',quiet=T)
+  #fit to matrix, using length of column names to define number of columns
+  y<-matrix(y,ncol=length(y.names),byrow=T)
+  colnames(y)<-y.names;rm(y.names)
+  #assign group (sample) names, remove unnecessary columns
+  rownames(y)<-y[,'Group']
+  drop<-c('label','Group','numOtus')
+  y<-y[,!colnames(y) %in% drop]
+  #convert to numerical
+  storage.mode(y)<-"integer"
+
 #Function to create ordination plot, useful for putting in for loops
-ordplot<-function(axisscores,grouping.1,grouping.2,metric,legend=FALSE,legend.names=c(),xlimit=c(-1,1),ylimit=c(-1,1),axes=c(1,2)) {
+plot.ord<-function(axisscores,grouping.1,grouping.2,metric,legend=FALSE,legend.names=c(),xlimit=c(-1,1),ylimit=c(-1,1),axes=c(1,2)) {
   plot.points<-c(21,24,23,22,25)
   if(missing(grouping.1)) {plot.colors<-c('lightskyblue4'); group.1.proxy<-1} else {plot.colors<-rainbow(length(unique(grouping.1))); group.1.proxy<-grouping.1}
   if(missing(grouping.2)) {plot.points<-c(21); group.2.proxy<-1} else {plot.points<-plot.points[1:length(unique(grouping.2))]; group.2.proxy<-grouping.2}
@@ -47,21 +63,25 @@ ordplot<-function(axisscores,grouping.1,grouping.2,metric,legend=FALSE,legend.na
 
 #Function which puts mothur's taxonomy and cons.taxonomy into an R data frame
 taxonomy_to_data_frame<-function(x,confidence=FALSE,keep.counts=TRUE) {
+  y<-scan(x,what=character(),sep='\t',skip=1,quiet=T)
+  y.names<-scan(y,what=character(),nlines=1,quiet=T)
+  colnames(y)<-y.names
   #remove heirarchy tags
-  z<-gsub(pattern='.__','',as.character(x$Taxonomy))
+  z<-gsub(pattern='.__','',as.character(y$Taxonomy))
+  y<-y[,-3]
   #remove boostrapped confidence values
   if(confidence==FALSE) {
     z<-gsub(pattern='\\([^\\)]+\\)','',z)
   }
   #taxonomy is now only separated by ';', split by this into a data frame
-  d<-read.table(text=z,sep=';',row.names=NULL,header=FALSE,fill=TRUE)
+  d<-scan(text=z,what=character(),sep=';',quiet=T,fill=TRUE)
   d<-d[,-8]
   names(d)<-c('Kingdom','Phyla','Class','Order','Family','Genus','Species')
   if(keep.counts==FALSE) {
-    d<-cbind('OTU'=x[,'OTU'],d)
+    d<-cbind('OTU'=y[,'OTU'],d)
   }
   else {
-    d<-cbind('OTU'=x[,'OTU'],'Size'=x[,'Size'],d)
+    d<-cbind('OTU'=x[,'OTU'],'Size'=integer(x[,'Size']),d)
   }
   return(d)
 }
