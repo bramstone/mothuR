@@ -1,5 +1,7 @@
 #Function to load in distance matrices created in mothur
-mothur_dist<-function(x,groups) {
+#x = The name (and file path if necessary) of the .dist file to read in
+mothur_dist<-function(x) {
+  groups<-scan(x,what=integer(),nlines=1)
   y<-data.matrix(read.table(x,sep='\t',fill=T,row.names=1,skip=1,col.names=1:groups))
   y<-cbind(y,rep(NA,dim(y)[1]))
   colnames(y)<-rownames(y)
@@ -65,40 +67,20 @@ taxonomy_to_data_frame<-function(x,confidence=FALSE,keep.counts=TRUE) {
 }
 
 #Function which summarizes mothur's tax.summary file by phyla
-#Grouping=TRUE indicates you want to look at only a subset of your cons.taxonomy
-#Group lets you specify your group from the sample column names from mothur
-#Mothur sample names should have information about group on them
-#Group.in.names specifies where in the sample name you've stuck information about sample groupings 
-#	(e.g. for 48con vs. 48trt, group.in.name=c(4,6) to select symbols 4-6)
-tax_summary_by_phyla<-function(x,grouping=FALSE,keep.counts=TRUE,group=as.character(),group.in.names=as.vector(),rel.abund=TRUE) {
+#x = filename (and path, if necessary) specifying a tax.summary file to load
+#rel.abund = whether to calculate relative or absolute abundances
+tax_summary_by_phyla<-function(x,rel.abund=TRUE) {
   #extract only phyla info
   x<-x[x$taxlevel==2,]
   #drop unneccesary columns
-  if(keep.counts==FALSE) {
-    drops<-c('taxlevel','rankID','daughterlevels','total')
-  }
-  else	drops<-c('taxlevel','rankID','daughterlevels')
-  x<-x[,!names(x)%in%drops]
-  #subset based on any user specified grouping
-  if(grouping==TRUE) {
-    #avoid the 'taxon' and 'total' columns
-    drops<-c('taxon','total')
-    y<-x[,!names(x)%in%drops]
-    #selects the group to use based on the user's group code system
-    groups<-substring(names(y),group.in.names[1],group.in.names[2])
-    keep<-which(groups==group)
-    y<-y[,keep]
-    x<-cbind(x[,names(x)%in%drops],y)
-  }
-  #phyla sums
-  if(keep.counts==FALSE) {
-    names(x)[1]<-'taxon'
-    x$total<-apply(x[,-1],1,sum)
-  }
-  else names(x)[1:2]<-c('taxon','total')
+  drops<-c('taxlevel','rankID','daughterlevels','total')
+  x<-x[,!names(x) %in% drops]
+  #generate phyla totals across rows
+  names(x)[1]<-'taxon'
+  x$total<-rowSums(x[,-1])
   #scale values to relative abundances
   if(rel.abund==TRUE) {
-    sample.sums<-apply(x[,-1],2,sum)
+    sample.sums<-colSums(x[,-1])
     for(i in 2:length(x)) {
         x[,i]<-x[,i]/sample.sums[i-1]}
   }
