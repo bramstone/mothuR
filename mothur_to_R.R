@@ -1,3 +1,4 @@
+
 #Function to load in distance matrices created in mothur
 #x = The name (and file path if necessary) of the .dist file to read in
 read.mothurdist<-function(x) {
@@ -6,6 +7,7 @@ read.mothurdist<-function(x) {
   y<-cbind(y,rep(NA,dim(y)[1]))
   colnames(y)<-rownames(y)
   y<-as.dist(y,diag=FALSE,upper=FALSE)
+  return(y)
 }
 
 #reads in shared file (specified by filename and file path if necessary) as an integer matrix (more memory efficient than data frame)
@@ -23,6 +25,7 @@ read.shared<-function(x) {
   y<-y[,!colnames(y) %in% drop]
   #convert to numerical
   storage.mode(y)<-"integer"
+  return(y)
 }
 	
 #Function to create ordination plot, useful for putting in for loops
