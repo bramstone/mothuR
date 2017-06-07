@@ -1,5 +1,3 @@
-
-
 #Function to load in distance matrices created in mothur
 #x = The name (and file path if necessary) of the .dist file to read in
 read.mothurdist<-function(x) {
@@ -26,7 +24,7 @@ read.shared<-function(x) {
   y<-y[,!colnames(y) %in% drop]
   #convert to numerical
   storage.mode(y)<-"integer"
-  sub('Otu(0)*','OTU ',colnames(test))
+  colnames(y)<-sub('Otu(0)*','OTU ',colnames(y))
   return(y)
 }
 	
