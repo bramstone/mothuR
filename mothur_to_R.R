@@ -23,7 +23,8 @@ read.shared<-function(x) {
   y<-y[,!colnames(y) %in% drop]
   #convert to numerical
   storage.mode(y)<-"integer"
-
+}
+	
 #Function to create ordination plot, useful for putting in for loops
 plot.ord<-function(axisscores,grouping.1,grouping.2,metric,legend=FALSE,legend.names=c(),xlimit=c(-1,1),ylimit=c(-1,1),axes=c(1,2)) {
   plot.points<-c(21,24,23,22,25)
