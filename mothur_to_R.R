@@ -11,21 +11,41 @@ read.mothurdist<-function(x) {
 
 #reads in shared file (specified by filename and file path if necessary) as an integer matrix (more memory efficient than data frame)
 read.shared<-function(x) {
-  #read data in as character
   y<-scan(x,what=character(),skip=1,sep='\t',quiet=T)
-  #read column names in
   y.names<-scan(x,what=character(),nlines=1,sep='\t',quiet=T)
-  #fit to matrix, using length of column names to define number of columns
   y<-matrix(y,ncol=length(y.names),byrow=T)
   colnames(y)<-y.names;rm(y.names)
-  #assign group (sample) names, remove unnecessary columns
   rownames(y)<-y[,'Group']
+  otu_label<-y[1,'label']
   drop<-c('label','Group','numOtus')
   y<-y[,!colnames(y) %in% drop]
-  #convert to numerical
   storage.mode(y)<-"integer"
   colnames(y)<-sub('Otu(0)*','OTU ',colnames(y))
+  attr(y, 'label') <- otu_label
+  attr(y, 'filename') <- gsub('(.*)/(.*).shared', '\\2.shared', x)
   return(y)
+}
+
+#writes out shared file, either with user-specified filename or by appending 'editR' to the long shared file name
+write.shared <- function(x, filename='', file.append='editR') {
+  numOtus <- ncol(x)
+  Group <- rownames(x)
+  label <- attr(x, 'label')
+  otu_names <- as.numeric(sub('OTU ([0-9*])', '\\1', colnames(x)))
+  max_otu <- nchar(max(otu_names))
+  otu_names <- formatC(otu_names, width=max_otu, format='d', flag='0')
+  otu_names <- paste0('Otu', otu_names)
+  if(filename=='') {
+    append <- paste0('.', file.append, '.shared')
+    filename <- paste0(sub('(.*).shared', '\\1', attr(x, 'filename')), append)
+  }
+  y <- x
+  colnames(y) <- otu_names
+  y <- data.frame(label, Group, numOtus, y)
+  write.table(y, file=filename,
+              quote=F, 
+              row.names=F,
+              sep='\t') #may need to tweek 'eol' (\n or \r\n for newline)
 }
 	
 #Function to create ordination plot, useful for putting in for loops
