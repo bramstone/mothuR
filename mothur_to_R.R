@@ -1,7 +1,7 @@
 #Function to load in distance matrices created in mothur
 #x = The name (and file path if necessary) of the .dist file to read in
 read.mothurdist<-function(x) {
-  groups<-scan(x,what=integer(),nlines=1)
+  groups<-scan(x,what=integer(),nlines=1,quiet=T)
   y<-data.matrix(read.table(x,sep='\t',fill=T,row.names=1,skip=1,col.names=1:groups))
   y<-cbind(y,rep(NA,dim(y)[1]))
   colnames(y)<-rownames(y)
